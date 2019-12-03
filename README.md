@@ -1,2 +1,2 @@
-# Java class usage
+# Java classes usage rating
 
