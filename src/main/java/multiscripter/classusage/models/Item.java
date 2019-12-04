@@ -2,6 +2,13 @@ package multiscripter.classusage.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Realizes entity "Repository item".
+ *
+ * @author Multiscripter
+ * @version 2019-12-04
+ * @since 2019-12-04
+ */
 public class Item {
 
     @JsonProperty("id")
@@ -230,8 +237,20 @@ public class Item {
         return htmlUrl;
     }
 
+    /**
+     * Gets full repository name.
+     * @return full repository name.
+     */
     public String getFullName() {
-        return fullName;
+        return this.fullName;
+    }
+
+    /**
+     * Gets repository name.
+     * @return repository name.
+     */
+    public String getName() {
+        return this.name;
     }
 
     public void setId(long id) {
