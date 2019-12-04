@@ -21,8 +21,14 @@ public class RequesterTests {
                     e1.getName().compareToIgnoreCase(e2.getName())
                 ));
         tree.addAll(engine.getStorage().getEntries().values());
+
+        System.out.println("------------- Top 100 used classes -------------");
+        int top = 0;
         for (Entry entry : tree) {
             System.out.println(entry);
+            if (++top == 100) {
+                break;
+            }
         }
     }
 }
