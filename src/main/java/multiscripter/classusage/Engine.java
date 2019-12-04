@@ -28,11 +28,6 @@ public class Engine {
     private ExecutorService pool;
 
     /**
-     * Thread list.
-     */
-    private ArrayList<RepoProcessor> threads;
-
-    /**
      * Constructor.
      *
      * @param threadCount thread count.
@@ -40,7 +35,6 @@ public class Engine {
     public Engine(final int threadCount) {
         this.pool = Executors.newFixedThreadPool(threadCount);
         this.storage = new EntryStorage();
-        this.threads = new ArrayList<>();
     }
 
     /**
@@ -79,11 +73,9 @@ public class Engine {
         } else if (repos.isItemsZero()) {
             System.err.println("Main.items.length is zero");
         } else {
-            for (Item item : repos.getItems()) {
-                this.threads.add(new RepoProcessor(this.storage, item));
-            }
             ArrayList<Future> futureList = new ArrayList<>();
-            for (RepoProcessor thread : this.threads) {
+            for (Item item : repos.getItems()) {
+                RepoProcessor thread = new RepoProcessor(this.storage, item);
                 futureList.add(this.pool.submit(thread));
             }
             for (Future item : futureList) {
