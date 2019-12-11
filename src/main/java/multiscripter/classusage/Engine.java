@@ -13,19 +13,29 @@ import multiscripter.classusage.models.Main;
  *
  * @author Multiscripter
  * @version 2019-12-04
- * @since 2019-12-04
+ * @since 2019-12-11
  */
 public class Engine {
 
     /**
-     * Entry storage.
+     * Current page number.
      */
-    private EntryStorage storage;
+    private int page = 1;
+
+    /**
+     * Items per page (default github value).
+     */
+    public static final int PER_PAGE = 30;
 
     /**
      * Thread pool.
      */
     private ExecutorService pool;
+
+    /**
+     * Entry storage.
+     */
+    private EntryStorage storage;
 
     /**
      * Constructor.
@@ -67,20 +77,26 @@ public class Engine {
      */
     public void start() throws Exception {
         Requester requester = new Requester();
-        Main repos = requester.request();
-        if (repos.isItemsNull()) {
-            System.err.println("Main.items is null");
-        } else if (repos.isItemsZero()) {
-            System.err.println("Main.items.length is zero");
-        } else {
-            ArrayList<Future> futureList = new ArrayList<>();
-            for (Item item : repos.getItems()) {
-                RepoProcessor thread = new RepoProcessor(this.storage, item);
-                futureList.add(this.pool.submit(thread));
+        Main repos;
+        do {
+            repos = requester.request(this.page, PER_PAGE);
+            if (repos.isItemsNull()) {
+                System.err.println("Main.items is null");
+                break;
+            } else if (repos.isItemsZero()) {
+                System.err.println("Main.items.length is zero");
+                break;
+            } else {
+                ArrayList<Future> futureList = new ArrayList<>();
+                for (Item item : repos.getItems()) {
+                    RepoProcessor thread
+                        = new RepoProcessor(this.storage, item);
+                    futureList.add(this.pool.submit(thread));
+                }
+                for (Future item : futureList) {
+                    item.get();
+                }
             }
-            for (Future item : futureList) {
-                item.get();
-            }
-        }
+        } while (repos.getCount() > this.page++ * PER_PAGE);
     }
 }

@@ -6,12 +6,16 @@ import org.junit.Test;
 
 /**
  * Tests application.
+ *
+ * @author Multiscripter
+ * @version 2019-12-04
+ * @since 2019-12-11
  */
 public class RequesterTests {
 
     @Test
     public void test() throws Exception {
-        Engine engine = new Engine(5);
+        Engine engine = new Engine(20);
         engine.start();
         System.out.println("-------------------------------------------------");
 
