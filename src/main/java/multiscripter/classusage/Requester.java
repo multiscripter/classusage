@@ -8,10 +8,10 @@ import org.springframework.web.client.RestTemplate;
  * Realizes entity "Github requester".
  *
  * @author Multiscripter
- * @version 2019-12-04
+ * @version 2020-03-31
  * @since 2019-12-11
  */
-public class Requester {
+class Requester {
 
     /**
      * Make main request.
@@ -21,7 +21,7 @@ public class Requester {
      * @return object with request results;
      * @throws Exception any exception.
      */
-    public Main request(final int page, final int perPage) throws Exception {
+    Main request(final int page, final int perPage) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         String url
             = "https://api.github.com/search/repositories?q=language:java";

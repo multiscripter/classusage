@@ -7,12 +7,13 @@ import java.util.concurrent.Future;
 import multiscripter.classusage.models.EntryStorage;
 import multiscripter.classusage.models.Item;
 import multiscripter.classusage.models.Main;
+import multiscripter.classusage.models.DocumentReceiver;
 
 /**
  * Realizes entity "App engine".
  *
  * @author Multiscripter
- * @version 2019-12-04
+ * @version 2020-03-31
  * @since 2019-12-11
  */
 public class Engine {
@@ -25,12 +26,17 @@ public class Engine {
     /**
      * Items per page (default github value).
      */
-    public static final int PER_PAGE = 30;
+    static final int PER_PAGE = 30;
 
     /**
      * Thread pool.
      */
     private ExecutorService pool;
+
+    /**
+     * Document receiver.
+     */
+    private DocumentReceiver receiver;
 
     /**
      * Entry storage.
@@ -42,8 +48,9 @@ public class Engine {
      *
      * @param threadCount thread count.
      */
-    public Engine(final int threadCount) {
+    Engine(final int threadCount) {
         this.pool = Executors.newFixedThreadPool(threadCount);
+        this.receiver = new DocumentReceiver();
         this.storage = new EntryStorage();
     }
 
@@ -52,7 +59,7 @@ public class Engine {
      *
      * @return entry storage.
      */
-    public EntryStorage getStorage() {
+    EntryStorage getStorage() {
         return this.storage;
     }
 
@@ -75,7 +82,7 @@ public class Engine {
      *
      * @throws Exception any exception.
      */
-    public void start() throws Exception {
+    void start() throws Exception {
         Requester requester = new Requester();
         Main repos;
         do {
@@ -90,7 +97,7 @@ public class Engine {
                 ArrayList<Future> futureList = new ArrayList<>();
                 for (Item item : repos.getItems()) {
                     RepoProcessor thread
-                        = new RepoProcessor(this.storage, item);
+                        = new RepoProcessor(this.storage, item, this.receiver);
                     futureList.add(this.pool.submit(thread));
                 }
                 for (Future item : futureList) {

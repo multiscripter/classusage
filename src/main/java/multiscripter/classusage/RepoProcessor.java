@@ -2,7 +2,7 @@ package multiscripter.classusage;
 
 import multiscripter.classusage.models.EntryStorage;
 import multiscripter.classusage.models.Item;
-import org.jsoup.Jsoup;
+import multiscripter.classusage.models.DocumentReceiver;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -11,7 +11,7 @@ import org.jsoup.select.Elements;
  * Realizes entity "Repository processor".
  *
  * @author Multiscripter
- * @version 2019-12-04
+ * @version 2020-03-31
  * @since 2019-12-04
  */
 public class RepoProcessor implements Runnable {
@@ -27,6 +27,11 @@ public class RepoProcessor implements Runnable {
     private int processed;
 
     /**
+     * Document receiver.
+     */
+    private DocumentReceiver receiver;
+
+    /**
      * GitHub repository.
      */
     private Item repo;
@@ -40,12 +45,15 @@ public class RepoProcessor implements Runnable {
      * Constructor.
      *
      * @param entryStorage entry storage.
+     * @param receiver document receiver.
      * @param repository gitHub repository.
      */
-    public RepoProcessor(
-        final EntryStorage entryStorage,
-        final Item repository) {
+    RepoProcessor(
+            final EntryStorage entryStorage,
+            final Item repository,
+            final DocumentReceiver receiver) {
         this.storage = entryStorage;
+        this.receiver = receiver;
         this.repo = repository;
     }
 
@@ -70,28 +78,32 @@ public class RepoProcessor implements Runnable {
      * @param root html reference.
      * @throws Exception any exception.
      */
-    public void processRef(final String url, final String root)
+    private void processRef(final String url, final String root)
         throws Exception {
         System.err.format("Repo: %s. Processed refs: %d%s",
             this.repo.getName(), this.processed, System.lineSeparator());
-        Document doc = Jsoup.connect(url).get();
-        Elements refs = doc.select(".files .js-navigation-open");
-        if (refs != null && refs.size() > 0) {
-            for (Element ref : refs) {
-                String href = ref.attr("href");
-                if (href.endsWith(".java")) {
-                    this.processJava(HUB + href);
-                } else if (!href.contains("/.")) {
-                    String[] fragments = href.split("/");
-                    if (!fragments[fragments.length - 1].contains(".")
-                        && !"..".equals(ref.ownText())
-                        && !root.equals(HUB + href)) {
-                        this.processRef(HUB + href, root);
+        Document doc = this.getDocument(url);
+        if (doc != null) {
+            Elements refs = doc.select(".files .js-navigation-open");
+            if (refs != null && refs.size() > 0) {
+                for (Element ref : refs) {
+                    String href = ref.attr("href");
+                    if (href.endsWith(".java")) {
+                        this.processJava(HUB + href);
+                    } else if (!href.contains("/.")) {
+                        String[] fragments = href.split("/");
+                        if (!fragments[fragments.length - 1].contains(".")
+                                && !"..".equals(ref.ownText())
+                                && !root.equals(HUB + href)) {
+                            this.processRef(HUB + href, root);
+                        }
                     }
                 }
             }
+            this.processed++;
+        } else {
+            System.err.println("processRef(). NULL for " + url);
         }
-        this.processed++;
     }
 
     /**
@@ -100,14 +112,34 @@ public class RepoProcessor implements Runnable {
      * @param url java file URL.
      * @throws Exception any exception.
      */
-    public void processJava(final String url) throws Exception {
-        Document doc = Jsoup.connect(url).get();
-        Elements lines = doc.select(".js-file-line");
-        for (Element line : lines) {
-            if (line.select(".pl-k").text().contains("import")) {
-                String fullClassName = line.select(".pl-smi").text();
-                this.storage.addOrIncrease(fullClassName);
+    private void processJava(final String url) throws Exception {
+        Document doc = this.getDocument(url);
+        if (doc != null) {
+            Elements lines = doc.select(".js-file-line");
+            for (Element line : lines) {
+                if (line.select(".pl-k").text().contains("import")) {
+                    String fullClassName = line.select(".pl-smi").text();
+                    this.storage.addOrIncrease(fullClassName);
+                }
+            }
+        } else {
+            System.err.println("processJava(). NULL for " + url);
+        }
+    }
+
+    private synchronized Document getDocument(String url) throws Exception {
+        while (true) {
+            try {
+                return this.receiver.getDocument(url);
+            } catch (Exception ex) {
+                if (!ex.toString().contains("Status=429")) {
+                    ex.printStackTrace();
+                    break;
+                }
+                System.err.println(ex.toString());
+                this.wait(1000);
             }
         }
+        return null;
     }
 }

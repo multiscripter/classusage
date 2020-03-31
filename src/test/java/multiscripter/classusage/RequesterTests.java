@@ -8,7 +8,7 @@ import org.junit.Test;
  * Tests application.
  *
  * @author Multiscripter
- * @version 2019-12-04
+ * @version 2020-03-31
  * @since 2019-12-11
  */
 public class RequesterTests {
@@ -20,8 +20,8 @@ public class RequesterTests {
         System.out.println("-------------------------------------------------");
 
         TreeSet<Entry> tree
-            = new TreeSet<>((e1, e2) -> e1.getCount() < e2.getCount() ? 1
-            : e1.getCount() > e2.getCount() ? -1 : (
+            = new TreeSet<>((e1, e2) -> e1.getCount() < e2.getCount()
+                ? 1 : e1.getCount() > e2.getCount() ? -1 : (
                     e1.getName().compareToIgnoreCase(e2.getName())
                 ));
         tree.addAll(engine.getStorage().getEntries().values());
